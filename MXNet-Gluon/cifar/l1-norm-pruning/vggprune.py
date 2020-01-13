@@ -12,6 +12,7 @@ from compute_flops import print_model_param_flops
 import random
 from gluoncv.data import transforms as gcv_transforms
 
+
 os.environ['MXNET_SAFE_ACCUMULATION'] = '1'
 #os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
 os.environ['MXNET_ENABLE_GPU_P2P'] = '0'
@@ -49,11 +50,12 @@ random.seed(args.random_seed)
 if not os.path.exists(args.save):
     makedirs(args.save)
 model = vgg(dataset=args.dataset, depth=args.depth)
+model.hybridize()
 model_name = 'vgg' + '_' + str(args.depth)
 
 if args.model:
     if os.path.isfile(args.model):
-        model.load_parameters(args.model, ctx = context)
+        model.load_parameters(args.model, ctx=context)
     print('Pre-processing Successful!')
 
 else:
@@ -125,7 +127,7 @@ for m in model._children.values():
                     cfg_mask.append(mx.ndarray.ones(out_channels))
                     layer_id += 1
                     continue
-                weight = mm.weight._data[0].copy()
+                weight = mm.weight._data[0]
                 weight_copy = weight.abs().asnumpy()
                 L1_norm = np.sum(weight_copy, axis=(1,2,3))
                 arg_max = np.argsort(L1_norm)
@@ -138,28 +140,34 @@ for m in model._children.values():
             elif isinstance(mm, nn.MaxPool2D):
                 layer_id += 1
 
-newmodel = vgg(dataset=args.dataset, cfg=cfg)
-newmodel.initialize(mxnet.init.Zero(), ctx=context)
-
-#print(len(cfg_mask))
+newmodel = vgg(dataset=args.dataset, depth=args.depth, cfg=cfg)
+print(newmodel)
 start_mask = mxnet.ndarray.ones(3)
 layer_id_in_cfg = 0
 end_mask = cfg_mask[layer_id_in_cfg]
+params={}
 
 for [m0, m1] in zip(model._children.values(), newmodel._children.values()):
     for [mm0, mm1] in zip(m0._children.values(), m1._children.values()):
         if isinstance(mm0, nn.BatchNorm):
-            idx1 = np.squeeze(np.argwhere(np.asarray(end_mask.asnumpy())))
-            if idx1 .size == 1:
-                idx1 = np.resize(idx1,(1,))
-            mm1.gamma._data[0] = mm0.gamma._data[0][idx1.tolist()].copy()
-            mm1.beta._data[0] = mm0.beta._data[0][idx1.tolist()].copy()
-            mm1.running_mean._data[0] = mm0.running_mean._data[0][idx1.tolist()].copy()
-            mm1.running_var._data[0] = mm0.running_var._data[0][idx1.tolist()].copy()
-            layer_id_in_cfg += 1
-            start_mask = end_mask
-            if layer_id_in_cfg < len(cfg_mask):
-                end_mask = cfg_mask[layer_id_in_cfg]
+            if layer_id_in_cfg < len(cfg_mask) :
+                idx1 = np.squeeze(np.argwhere(np.asarray(end_mask.asnumpy())))
+                if idx1 .size == 1:
+                    idx1 = np.resize(idx1,(1,))
+                params[mm1.gamma.name] = mm0.gamma._data[0][idx1.tolist()]
+                params[mm1.beta.name] = mm0.beta._data[0][idx1.tolist()]
+                params[mm1.running_mean.name] = mm0.running_mean._data[0][idx1.tolist()]
+                params[mm1.running_var.name] = mm0.running_var._data[0][idx1.tolist()]
+                layer_id_in_cfg += 1
+                start_mask = end_mask
+                if layer_id_in_cfg < len(cfg_mask):  # do not change in Final FC
+                    end_mask = cfg_mask[layer_id_in_cfg]
+            else:#
+                params[mm1.gamma.name] = mm0.gamma._data[0]
+                params[mm1.beta.name] = mm0.beta._data[0]
+                params[mm1.running_mean.name] = mm0.running_mean._data[0]
+                params[mm1.running_var.name] = mm0.running_var._data[0]
+                layer_id_in_cfg += 1
 
         elif isinstance(mm0, nn.Conv2D):
             idx0 = np.squeeze(np.argwhere(np.asarray(start_mask.asnumpy())))
@@ -170,24 +178,28 @@ for [m0, m1] in zip(model._children.values(), newmodel._children.values()):
                 idx0 = np.resize(idx0, (1,))
             if idx1.size == 1:
                 idx1 = np.resize(idx1, (1,))
-            w1 = mm0.weight._data[0][:, idx0.tolist(), :, :].copy()
-            w1 = w1[idx1.tolist(), :, :, :].copy()
-            mm1.weight._data[0] = w1.copy()
+            w1 = mm0.weight._data[0][:, idx0.tolist(), :, :]
+            w1 = w1[idx1.tolist(), :, :, :]
+            params[mm1.weight.name] = w1
 
         elif isinstance(mm0, nn.Dense):
             if layer_id_in_cfg == len(cfg_mask):
                 idx0 = np.squeeze(np.argwhere(np.asarray(cfg_mask[-1].asnumpy())))
                 if idx0.size == 1:
                     idx0 = np.resize(idx0, (1,))
-                mm1.weight._data[0] = mm0.weight._data[0][:, idx0].copy()
-                mm1.bias._data[0] = mm0.bias._data[0].copy()
+                params[mm1.weight.name] = mm0.weight._data[0][:, idx0]
+                params[mm1.bias.name] = mm0.bias._data[0]
                 layer_id_in_cfg += 1
                 continue
-            mm1.weight._data[0] = mm0.weight._data[0].copy()
-            mm1.bias._data[0] = mm0.bias._data[0].copy()
+            params[mm1.weight.name] = mm0.weight._data[0]
+            params[mm1.bias.name] = mm0.bias._data[0]
 
+
+#print(params)
+pruned_model = '%s/%s-%s-pruned.params' % (args.save, args.dataset, model_name)
+mxnet.ndarray.save(pruned_model, params)
+newmodel.collect_params().load(pruned_model, ctx=context)
 acc = test(newmodel)
-newmodel.save_parameters('%s/%s-%s-pruned.params' % (args.save, args.dataset, model_name))
 
 num_parameters, flops = print_model_param_flops(newmodel, input_res=32)
 

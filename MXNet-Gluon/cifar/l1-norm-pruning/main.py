@@ -3,14 +3,15 @@ import argparse
 import numpy as np
 import os
 import shutil
-
+import logging
 import mxnet
+import time
 import mxnet as mx
 from mxnet import gluon, nd
 from mxnet import autograd as ag
 from mxnet.gluon import nn
 from mxnet.gluon.data.vision import transforms
-
+import random
 import gluoncv as gcv
 from gluoncv.model_zoo import get_model
 from gluoncv.utils import makedirs
@@ -36,11 +37,11 @@ def parse_args():
                         help='training batch size per device (CPU/GPU).')
     parser.add_argument('--dataset', type=str, default='cifar10',
                         help='dataset to use. options are cifar10 and cifar100. default is cifar10.')
-    parser.add_argument('-j', '--num-data-workers', dest='num_workers', default=4, type=int,
+    parser.add_argument('-j', '--num-data-workers', dest='num_workers', default=8, type=int,
                         help='number of preprocessing workers')
 
     #========================training HPs========================================
-    parser.add_argument('--seed', type=int, default=2,
+    parser.add_argument('--random-seed', type=int, default=2,
                         help='random seed (default: 1)')
     parser.add_argument('--num-gpus', type=int, default=8,
                         help='number of gpus to use.')
@@ -60,7 +61,7 @@ def parse_args():
                         help='epochs at which learning rate decays. default is 80,120.')
     parser.add_argument('--mode', type=str,
                         help='mode in which to train the model. options are imperative, hybrid')
-    parser.add_argument('--dtype', type=str, default='float32'
+    parser.add_argument('--dtype', type=str, default='float32',
                         help='training dtype')
 
     #==============================save&log&resume====================================
@@ -68,7 +69,7 @@ def parse_args():
                         help='period in epoch of model saving.')
     parser.add_argument('--log-interval', type=int, default=100,
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--save-dir', type=str, default='models',
+    parser.add_argument('--save-dir', type=str, default='params',
                         help='directory of saved models')
     parser.add_argument('--log-dir', type=str, default='logs',
                         help='directory of saved logs')
@@ -156,7 +157,7 @@ def main():
         for i, batch in enumerate(val_data):
             data = gluon.utils.split_and_load(batch[0], ctx_list=ctx, batch_axis=0)
             label = gluon.utils.split_and_load(batch[1], ctx_list=ctx, batch_axis=0)
-            outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
+            outputs = [model(X.astype(opt.dtype, copy=False)) for X in data]
             metric.update(label, outputs)
         return metric.get()
 
@@ -164,7 +165,7 @@ def main():
         if isinstance(ctx, mx.Context):
             ctx = [ctx]
         model.initialize(mx.init.Xavier(), ctx=ctx)
-        trainer = gluon.Trainer(net.collect_params(), 'sgd',
+        trainer = gluon.Trainer(model.collect_params(), 'sgd',
                                 {'learning_rate': opt.lr, 'wd': opt.wd, 'momentum': opt.momentum})
         metric = mx.metric.Accuracy()
         train_metric = mx.metric.Accuracy()
@@ -190,7 +191,7 @@ def main():
                 label = gluon.utils.split_and_load(batch[1], ctx_list=ctx, batch_axis=0)
 
                 with ag.record():
-                    output = [net(X.astype(opt.dtype, copy=False)) for X in data]
+                    output = [model(X.astype(opt.dtype, copy=False)) for X in data]
                     loss = [loss_fn(yhat, y.astype(opt.dtype, copy=False)) for yhat, y in zip(output, label)]
                 for l in loss:
                     l.backward()
@@ -205,14 +206,14 @@ def main():
                               global_step=iteration)
 
                 if opt.log_interval and not (i + 1) % opt.log_interval:
-                    logger.info('Epoch[%d] Batch [%d]\tSpeed: %f samples/sec\t%s=%f\tlr=%f' % (
+                    logging.info('Epoch[%d] Batch [%d]\tSpeed: %f samples/sec\t%s=%f\tlr=%f' % (
                         epoch, i, batch_size * opt.log_interval / (time.time() - btic),
                         name, acc, trainer.learning_rate))
                     btic = time.time()
 
                 iteration += 1
             if epoch == 0:
-                sw.add_graph(net)
+                sw.add_graph(model)
             train_loss /= batch_size * num_batch
             _, acc = train_metric.get()
             _, val_acc = test(ctx, val_data)
@@ -220,22 +221,22 @@ def main():
 
             if val_acc > best_val_score:
                 best_val_score = val_acc
-                net.save_parameters('%s/%.4f-%s-%s-%d-best.params' % (save_dir, best_val_score, opt.dataset, model_name, epoch))
+                model.save_parameters('%s/%.4f-%s-%s-%d-best.params' % (save_dir, best_val_score, opt.dataset, model_name, epoch))
                 trainer.save_states('%s/%.4f-%s-%s-%d-best.states' % (save_dir, best_val_score, opt.dataset, model_name, epoch))
 
             logging.info('[Epoch %d] train=%f val=%f loss=%f time: %f' %
                          (epoch, acc, val_acc, train_loss, time.time() - tic))
 
             if save_period and save_dir and (epoch + 1) % save_period == 0:
-                net.save_parameters('%s/%s-%s-%d.params' % (save_dir, opt.dataset, model_name, epoch))
+                model.save_parameters('%s/%s-%s-%d.params' % (save_dir, opt.dataset, model_name, epoch))
                 trainer.save_states('%s/%s-%s-%d.states'%(save_dir, opt.datset, model_name, epoch))
 
         if save_period and save_dir:
-            net.save_parameters('%s/%s-%s-%d.params' % (save_dir, opt.dataset, model_name, epochs - 1))
+            model.save_parameters('%s/%s-%s-%d.params' % (save_dir, opt.dataset, model_name, epochs - 1))
             trainer.save_states('%s/%s-%s-%d.states' % (save_dir, opt.dataset, model_name, epochs - 1))
 
     if opt.mode == 'hybrid':
-        net.hybridize()
+        model.hybridize()
     train(opt.num_epochs, context)
 
 if __name__ == '__main__':

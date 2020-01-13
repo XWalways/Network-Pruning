@@ -72,5 +72,3 @@ if __name__ == '__main__':
     y = net(x)
     net.save_parameters('../vgg.params')
     print(y.shape)
-
-

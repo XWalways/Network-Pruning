@@ -80,7 +80,7 @@ def print_model_param_flops(model, input_res=224, multiply_adds=True):
 
     get(model)
     input = nd.random.uniform(-1, 1, shape=(1, 3, input_res, input_res), ctx=mx.cpu(0))
-    model.initialize(mxnet.init.Xavier(), ctx=mx.cpu(0))
+    model.initialize(mxnet.init.Xavier(), ctx=mx.cpu(0), force_reinit=True)
     out = model(input)
     total_flops = (sum(list_conv_flops) + sum(list_dense_flops) + sum(list_bn_flops) + sum(list_relu) + sum(list_pooling))
     total_params = (sum(list_conv_params) + sum(list_dense_params) + sum(list_bn_params))
