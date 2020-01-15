@@ -125,9 +125,10 @@ def resnet(**kwargs):
 
 if __name__ == '__main__':
     net = resnet(depth=56)
-    net.initialize(mxnet.init.Xavier())
-    x=mxnet.ndarray.zeros((16, 3, 32, 32))
+    net.initialize(mxnet.init.Xavier(), ctx=mxnet.gpu(0))
+    x = mxnet.ndarray.zeros((16, 3, 32, 32), ctx=mxnet.gpu(0))
     y = net(x)
+    net.save_parameters('../resnet56.params')
     print(y.shape)
 
 

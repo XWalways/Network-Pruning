@@ -109,7 +109,7 @@ def test(model):
         outputs = [model(X.astype(args.dtype, copy=False)) for X in data]
         metric.update(label, outputs)
         _, acc = metric.get()
-    print('\nTestset Accuracy: ', acc)
+    print('\nTest-set Accuracy: ', acc)
     return acc
 
 acc = test(model)
@@ -203,7 +203,7 @@ acc = test(newmodel)
 
 num_parameters, flops = print_model_param_flops(newmodel, input_res=32)
 
-print('\nTest accuracy after pruning: ', acc)
+print('\nTest-set accuracy after pruning: ', acc)
 
 
 
