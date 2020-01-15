@@ -53,7 +53,7 @@ if not os.path.exists(args.save):
     makedirs(args.save)
 model = resnet(depth=args.depth, dataset=args.dataset)
 
-model_name = 'resnet56' + '_' + str(args.depth)
+model_name = 'resnet' + '_' + str(args.depth)
 
 if args.model:
     if os.path.isfile(args.model):
