@@ -33,7 +33,7 @@ def parse_args():
                         help='depth of the neural network')
 
     #========================dataset=============================================
-    parser.add_argument('--batch-size', type=int, default=32,
+    parser.add_argument('--batch-size', type=int, default=128,
                         help='training batch size per device (CPU/GPU).')
     parser.add_argument('--dataset', type=str, default='cifar10',
                         help='dataset to use. options are cifar10 and cifar100. default is cifar10.')
@@ -43,9 +43,9 @@ def parse_args():
     #========================training HPs========================================
     parser.add_argument('--random-seed', type=int, default=2,
                         help='random seed (default: 1)')
-    parser.add_argument('--num-gpus', type=int, default=8,
+    parser.add_argument('--num-gpus', type=int, default=1,
                         help='number of gpus to use.')
-    parser.add_argument('--num-epochs', type=int, default=160,
+    parser.add_argument('--num-epochs', type=int, default=200,
                         help='number of training epochs.')
     parser.add_argument('--lr', type=float, default=0.1,
                         help='learning rate. default is 0.1.')
@@ -57,8 +57,8 @@ def parse_args():
                         help='decay rate of learning rate. default is 0.1.')
     parser.add_argument('--lr-decay-period', type=int, default=0,
                         help='period in epoch for learning rate decays. default is 0 (has no effect).')
-    parser.add_argument('--lr-decay-epoch', type=str, default='80,120',
-                        help='epochs at which learning rate decays. default is 80,120.')
+    parser.add_argument('--lr-decay-epoch', type=str, default='100,150',
+                        help='epochs at which learning rate decays. default is 100,150.')
     parser.add_argument('--mode', type=str,
                         help='mode in which to train the model. options are imperative, hybrid')
     parser.add_argument('--dtype', type=str, default='float32',
@@ -69,9 +69,9 @@ def parse_args():
                         help='period in epoch of model saving.')
     parser.add_argument('--log-interval', type=int, default=100,
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--save-dir', type=str, default='params',
+    parser.add_argument('--save-dir', type=str, default='params_baseline',
                         help='directory of saved models')
-    parser.add_argument('--log-dir', type=str, default='logs',
+    parser.add_argument('--log-dir', type=str, default='logs_baseline',
                         help='directory of saved logs')
     parser.add_argument('--resume', type=str,
                         help='resume training from the model')
@@ -144,7 +144,7 @@ def main():
     model = models.__dict__[opt.arch](dataset=opt.dataset, depth=opt.depth)
     model_name = opt.arch + '_' + str(opt.depth)
     if opt.resume:
-        net.load_parameters(opt.resume, ctx=context)
+        model.load_parameters(opt.resume, ctx=context)
 
     sw = SummaryWriter(logdir=log_dir, flush_secs=5, verbose=False)
 

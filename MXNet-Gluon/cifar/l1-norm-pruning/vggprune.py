@@ -22,7 +22,7 @@ parser.add_argument('--dataset', type=str, default='cifar10',
                     help='training dataset (default: cifar10)')
 parser.add_argument('--test-batch-size', type=int, default=256,
                     help='input batch size for testing (default: 256)')
-parser.add_argument('--num-gpus', type=int, default=8,
+parser.add_argument('--num-gpus', type=int, default=1,
                     help='number of gpus')
 parser.add_argument('--random-seed', type=int, default=2,
                     help='random seed')
@@ -140,6 +140,7 @@ for m in model._children.values():
             elif isinstance(mm, nn.MaxPool2D):
                 layer_id += 1
 
+print(cfg)
 newmodel = vgg(dataset=args.dataset, depth=args.depth, cfg=cfg)
 print(newmodel)
 start_mask = mxnet.ndarray.ones(3)
@@ -204,7 +205,7 @@ acc = test(newmodel)
 num_parameters, flops = print_model_param_flops(newmodel, input_res=32)
 
 print('\nTest-set accuracy after pruning: ', acc)
-
+print('\nThe Pruned Channel Config Which Will be Used in Finetuning or Retraining: ', cfg)
 
 
 

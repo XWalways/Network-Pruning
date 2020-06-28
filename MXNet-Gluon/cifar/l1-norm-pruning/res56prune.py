@@ -18,12 +18,12 @@ os.environ['MXNET_SAFE_ACCUMULATION'] = '1'
 #os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
 os.environ['MXNET_ENABLE_GPU_P2P'] = '0'
 # Prune settings
-parser = argparse.ArgumentParser(description='PyTorch Slimming CIFAR prune')
+parser = argparse.ArgumentParser(description='Gluon Slimming CIFAR prune')
 parser.add_argument('--dataset', type=str, default='cifar10',
                     help='training dataset (default: cifar10)')
 parser.add_argument('--test-batch-size', type=int, default=256,
                     help='input batch size for testing (default: 256)')
-parser.add_argument('--num-gpus', type=int, default=8,
+parser.add_argument('--num-gpus', type=int, default=1,
                     help='number of gpus')
 parser.add_argument('--random-seed', type=int, default=2,
                     help='random seed')
@@ -134,6 +134,7 @@ for m in model._children.values():
                 out_channels = mm.weight.shape[0]
                 if layer_id in skip[args.v]:
                     cfg_mask.append(mx.ndarray.ones(out_channels))
+                    cfg.append(out_channels)
                     layer_id += 1
                     continue
                 if layer_id % 2 == 0:
@@ -158,6 +159,7 @@ for m in model._children.values():
                     continue
                 layer_id += 1
 
+print(cfg)
 newmodel = resnet(dataset=args.dataset, depth=args.depth, cfg=cfg)
 print(newmodel)
 start_mask = torch.ones(3)
@@ -170,6 +172,7 @@ for [m0, m1] in zip(model._children.values(), newmodel._children.values()):
         if isinstance(mm0, nn.Conv2D):
             if conv_count == 1:
                 params[mm1.weight.name] = mm0.weight._data[0]
+                conv_count += 1
                 continue
             if conv_count % 2 == 0:
                 mask = cfg_mask[layer_id_in_cfg]
@@ -220,4 +223,5 @@ acc = test(newmodel)
 num_parameters, flops = print_model_param_flops(newmodel, input_res=32)
 
 print('\nTest-set accuracy after pruning: ', acc)
+print('\nThe Pruned Channel Config Which Will be Used in Finetuning or Retraining: ', cfg)
 

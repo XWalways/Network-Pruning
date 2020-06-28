@@ -31,7 +31,7 @@ class vgg(nn.HybridBlock):
         self.classifier = nn.HybridSequential()
         with self.classifier.name_scope():
             self.classifier.add(nn.Dense( 512, in_units=cfg[-1]))
-            self.classifier.add(nn.BatchNorm(in_channels=512))
+            self.classifier.add(nn.BatchNorm(in_channels=512,momentum=0.1))
             self.classifier.add(nn.Activation('relu'))
             self.classifier.add(nn.Dense(num_classes, in_units=512))
 
@@ -47,7 +47,7 @@ class vgg(nn.HybridBlock):
                 else:
                     if batch_norm:
                         layers.add(nn.Conv2D(v, in_channels=in_channels, kernel_size=3, padding=1, use_bias=False))
-                        layers.add(nn.BatchNorm(in_channels=v))
+                        layers.add(nn.BatchNorm(in_channels=v,momentum=0.1))
                         layers.add(nn.Activation('relu'))
                     else:
                         layers.add(nn.Conv2D(v, in_channels=in_channels, kernel_size=3, padding=1, use_bias=False))
@@ -66,6 +66,7 @@ class vgg(nn.HybridBlock):
 
 if __name__ == '__main__':
     net = vgg(dataset='cifar10', depth=16)
+    print(net)
     net.hybridize()
     net.initialize(mxnet.init.Xavier(), ctx=mxnet.gpu(0))
     x=mxnet.ndarray.zeros((16, 3, 32, 32), ctx=mxnet.gpu(0))

@@ -17,7 +17,7 @@ def print_model_param_flops(model, input_res=224, multiply_adds=True):
         bias_ops = 1 if self.bias is not None else 0
 
         params = output_channels * (kernel_ops + bias_ops)
-        flops = batch_size *  (kernel_ops * (2 if multiply_adds else 1) + bias_ops) * output_height * output_width
+        flops = batch_size *  (kernel_ops * (2 if multiply_adds else 1) + bias_ops) * output_height * output_width * output_channels
 
         list_conv_flops.append(flops)
         list_conv_params.append(params)
@@ -87,9 +87,9 @@ def print_model_param_flops(model, input_res=224, multiply_adds=True):
 
     print('Number of params: %.2fM' % (total_params / 1e6))
 
-    print('\nNumber of FLOPs: %.5fG' % (total_flops / 3 / 1e9))
+    print('\nNumber of FLOPs: %.5fG' % (total_flops / 1e9))
 
-    return total_flops / 3, total_params
+    return total_params, total_flops
 
 
 
@@ -97,8 +97,8 @@ if __name__ == '__main__':
     import models
     net = models.vgg()
     #print(net)
-    flops, _ = print_model_param_flops(net, input_res=32, multiply_adds=True)
-    #print(flops)
+    _, flops = print_model_param_flops(net, input_res=32, multiply_adds=True)
+    print(flops)
 
 
 

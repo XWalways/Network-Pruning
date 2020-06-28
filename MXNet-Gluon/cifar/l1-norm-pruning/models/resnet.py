@@ -18,10 +18,10 @@ class BasicBlock(nn.HybridBlock):
         # cfg should be a number in this case
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, cfg, stride)
-        self.bn1 = nn.BatchNorm(in_channels=cfg)
+        self.bn1 = nn.BatchNorm(in_channels=cfg,momentum=0.1)
         self.relu1 = nn.Activation('relu')
         self.conv2 = conv3x3(cfg, planes)
-        self.bn2 = nn.BatchNorm(in_channels=planes)
+        self.bn2 = nn.BatchNorm(in_channels=planes,momentum=0.1)
         self.relu2 = nn.Activation('relu')
         self.pool = nn.AvgPool2D(pool_size=2, strides=2)
         self.downsample = downsample
@@ -72,7 +72,7 @@ class ResNet(nn.HybridBlock):
         self.inplanes = 16
         self.conv1 = nn.Conv2D(16, in_channels=3, kernel_size=3, padding=1,
                                use_bias=False)
-        self.bn1 = nn.BatchNorm(in_channels=16)
+        self.bn1 = nn.BatchNorm(in_channels=16,momentum=0.1)
         self.relu = nn.Activation('relu')
         self.layer1 = self._make_layer(block, 16, n, cfg=cfg[0:n])
         self.layer2 = self._make_layer(block, 32, n, cfg=cfg[n:2 * n], stride=2)
@@ -125,6 +125,7 @@ def resnet(**kwargs):
 
 if __name__ == '__main__':
     net = resnet(depth=56)
+    print(net)
     net.initialize(mxnet.init.Xavier(), ctx=mxnet.gpu(0))
     x = mxnet.ndarray.zeros((16, 3, 32, 32), ctx=mxnet.gpu(0))
     y = net(x)
