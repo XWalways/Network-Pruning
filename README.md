@@ -1,13 +1,6 @@
 # Rethinking the Value of Network Pruning
-This repository contains the code for reproducing the results, and trained ImageNet models, in the following paper:  
 
-Rethinking the Value of Network Pruning. [[arXiv]](https://arxiv.org/abs/1810.05270) [[OpenReview]](https://openreview.net/forum?id=rJlnB3C5Ym)
-
-[Zhuang Liu](https://liuzhuang13.github.io/)\*, [Mingjie Sun](https://eric-mingjie.github.io/)\*, [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz/), [Gao Huang](http://www.gaohuang.net/), [Trevor Darrell](https://people.eecs.berkeley.edu/~trevor/) (\* equal contribution).
-
-ICLR 2019. Also [Best Paper Award](https://nips.cc/Conferences/2018/Schedule?showEvent=10941) at NIPS 2018 Workshop on Compact Deep Neural Networks.
-
-Several pruning methods' implementations contained in this repo can also be readily used for other research purposes.
+Rethinking the Value of Network Pruning(ICLR2019). [[arXiv]](https://arxiv.org/abs/1810.05270) [[OpenReview]](https://openreview.net/forum?id=rJlnB3C5Ym)
 
 ## Paper Summary
 
@@ -22,19 +15,19 @@ pipeline.
 
 <br>
 
-Our paper shows that for **structured** pruning, **training the pruned model from scratch can almost always achieve comparable or higher level of accuracy than the model obtained from the typical "training, pruning and fine-tuning" (Fig. 1) procedure**. We conclude that for those pruning methods:
+The paper shows that for **structured** pruning, **training the pruned model from scratch can almost always achieve comparable or higher level of accuracy than the model obtained from the typical "training, pruning and fine-tuning" (Fig. 1) procedure**. We conclude that for those pruning methods:
 
 1. Training a large, over-parameterized model is often not necessary to obtain an efficient final model.
 2. Learned “important” weights of the large model are typically not useful for the small pruned model. 
 3. The pruned architecture itself, rather than a set of inherited “important” weights, is more crucial to the efficiency in the final model, which suggests that in some cases pruning can be useful as an architecture search paradigm. 
 
-Our results suggest the need for more careful baseline evaluations in future research on structured pruning methods. 
+The results suggest the need for more careful baseline evaluations in future research on structured pruning methods. 
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/8370623/67257959-3b83f280-f443-11e9-8e4a-3afec30cff45.png" width="400">
 </div>
 
-Fig 2: Difference between predefined and automatically discovered target architectures, in channel pruning. The pruning ratio x is user-specified, while a, b, c, d are determined by the pruning algorithm. Unstructured sparse pruning can also be viewed as automatic. Our finding has different implications for predefined and automatic methods: for a predefined method, it is possible to skip the traditional "training, pruning and fine-tuning" pipeline and directly train the pruned model; for automatic methods, the pruning can be seen as a form of architecture learning.
+Fig 2: Difference between predefined and automatically discovered target architectures, in channel pruning. The pruning ratio x is user-specified, while a, b, c, d are determined by the pruning algorithm. Unstructured sparse pruning can also be viewed as automatic. The finding has different implications for predefined and automatic methods: for a predefined method, it is possible to skip the traditional "training, pruning and fine-tuning" pipeline and directly train the pruned model; for automatic methods, the pruning can be seen as a form of architecture learning.
 
 <br>
 
