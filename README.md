@@ -15,7 +15,7 @@ pipeline.
 
 <br>
 
-The paper shows that for **structured** pruning, **training the pruned model from scratch can almost always achieve comparable or higher level of accuracy than the model obtained from the typical "training, pruning and fine-tuning" (Fig. 1) procedure**. We conclude that for those pruning methods:
+The paper shows that for **structured** pruning, **training the pruned model from scratch can almost always achieve comparable or higher level of accuracy than the model obtained from the typical "training, pruning and fine-tuning" (Fig. 1) procedure**. Paper concluded that for those pruning methods:
 
 1. Training a large, over-parameterized model is often not necessary to obtain an efficient final model.
 2. Learned “important” weights of the large model are typically not useful for the small pruned model. 
@@ -31,10 +31,10 @@ Fig 2: Difference between predefined and automatically discovered target archite
 
 <br>
 
-We also compare with the "[Lottery Ticket Hypothesis](https://arxiv.org/abs/1803.03635)" (Frankle & Carbin 2019), and find that with optimal learning rate, the "winning ticket" initialization as used in Frankle & Carbin (2019) does not bring improvement over random initialization. For more details please refer to our paper.
+The Paper also compare with the "[Lottery Ticket Hypothesis](https://arxiv.org/abs/1803.03635)" (Frankle & Carbin 2019), and find that with optimal learning rate, the "winning ticket" initialization as used in Frankle & Carbin (2019) does not bring improvement over random initialization. For more details please refer to our paper.
 
 ## Implementation
-We evaluated the following seven pruning methods. 
+The Paper evaluated the following seven pruning methods. 
 
 1. [L1-norm based channel pruning](https://arxiv.org/abs/1608.08710)
 2. [ThiNet](https://arxiv.org/abs/1707.06342)
@@ -44,7 +44,7 @@ We evaluated the following seven pruning methods.
 6. [Soft filter pruning](https://www.ijcai.org/proceedings/2018/0309.pdf)
 7. [Unstructured weight-level pruning](https://arxiv.org/abs/1506.02626)
 
-The first six is structured while the last one is unstructured (or sparse). For CIFAR, our code is based on [pytorch-classification](https://github.com/bearpaw/pytorch-classification) and [network-slimming](https://github.com/Eric-mingjie/network-slimming). For ImageNet, we use the [official Pytorch ImageNet training code](https://github.com/pytorch/examples/blob/0.3.1/imagenet/main.py). The instructions and models are in each subfolder.
+The first six is structured while the last one is unstructured (or sparse). For CIFAR, our code is based on [pytorch-classification](https://github.com/bearpaw/pytorch-classification) and [network-slimming](https://github.com/Eric-mingjie/network-slimming). For ImageNet, The Paper uses the [official Pytorch ImageNet training code](https://github.com/pytorch/examples/blob/0.3.1/imagenet/main.py). The instructions and models are in each subfolder.
 
 For experiments on [The Lottery Ticket Hypothesis](https://arxiv.org/abs/1803.03635), please refer to the folder [cifar/lottery-ticket](https://github.com/Eric-mingjie/rethinking-network-pruning/tree/master/cifar/lottery-ticket).
 
