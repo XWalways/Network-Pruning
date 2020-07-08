@@ -55,21 +55,4 @@ The first six is structured while the last one is unstructured (or sparse). For 
 
 For experiments on [The Lottery Ticket Hypothesis](https://arxiv.org/abs/1803.03635), please refer to the folder [cifar/lottery-ticket](https://github.com/Eric-mingjie/rethinking-network-pruning/tree/master/cifar/lottery-ticket).
 
-Our experiment environment is Python 3.6 & PyTorch 0.3.1. 
 
-## Contact
-Feel free to discuss papers/code with us through issues/emails!
-
-sunmj15 at gmail.com  
-liuzhuangthu at gmail.com
-
-## Citation
-If you use our code in your research, please cite:
-```
-@inproceedings{liu2018rethinking,
-  title={Rethinking the Value of Network Pruning},
-  author={Liu, Zhuang and Sun, Mingjie and Zhou, Tinghui and Huang, Gao and Darrell, Trevor},
-  booktitle={ICLR},
-  year={2019}
-}
-```
